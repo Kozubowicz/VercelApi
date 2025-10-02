@@ -15,7 +15,10 @@ export default async function handler(req, res) {
     console.error('MongoDB connection error:', err);
     return res
       .status(500)
-      .json({ error: 'Cannot connect to MongoDB', details: err.message });
+      .json({
+        error: 'Cannot connect to MongoDB DataBase',
+        details: err.message,
+      });
   } finally {
     await client.close();
   }
