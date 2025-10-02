@@ -12,26 +12,34 @@ async function connectToDatabase() {
 
 export default async function handler(req, res) {
   try {
-    // Read the body (Vercel automatically parses JSON when POSTing)
     const { page = 0 } = req.body || {};
-
     const db = await connectToDatabase();
-
-    // Download all posts
     const postsCollection = db.collection('Posts');
-    const allPosts = await postsCollection.find({}).toArray();
 
-    // Paging
-    const posts = allPosts.slice(page * 10, page * 10 + 10);
+    const posts = await postsCollection
+      .find({})
+      .skip(page * 10)
+      .limit(10)
+      .toArray();
 
-    // Geting users data
-    const userIds = posts.map((post) => new ObjectId(post.userId));
+    const totalPosts = await postsCollection.countDocuments();
+    const pagesNumber = Math.ceil(totalPosts / 10);
+
+    const userIds = posts
+      .map((post) => {
+        try {
+          return new ObjectId(post.userId);
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean);
+
     const usersCollection = db.collection('Users');
     const users = await usersCollection
       .find({ _id: { $in: userIds } })
       .toArray();
 
-    // Creating users map
     const userMap = {};
     users.forEach((user) => {
       userMap[user._id.toString()] = {
@@ -40,7 +48,6 @@ export default async function handler(req, res) {
       };
     });
 
-    // Attaching users data
     posts.forEach((post) => {
       const userId = post.userId.toString();
       if (userMap[userId]) {
@@ -49,11 +56,9 @@ export default async function handler(req, res) {
       }
     });
 
-    const pagesNumber = Math.ceil(allPosts.length / 10);
-
     return res.status(200).json({ posts, pagesNumber });
   } catch (err) {
-    console.error(err);
+    console.error('Error in handler:', err);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 }
