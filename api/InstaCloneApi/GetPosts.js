@@ -11,27 +11,6 @@ async function connectToDatabase() {
 }
 
 export default async function handler(req, res) {
-  // --- CORS dynamiczne ---
-  const allowedOrigins = [
-    'http://localhost:5173', // dev
-    'https://kozubowicz-portfolio.onrender.com', // prod główna domena
-  ];
-
-  // dopuszczamy również wszystkie poddomeny produkcyjne
-  const origin = req.headers.origin;
-  if (
-    origin &&
-    (allowedOrigins.includes(origin) ||
-      origin.endsWith('.kozubowicz-portfolio.onrender.com'))
-  ) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Vary', 'Origin'); // ważne przy dynamicznym Origin
-  }
-
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  // Obsługa preflight (OPTIONS)
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
